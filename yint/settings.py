@@ -103,3 +103,37 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 TEMPLATE_DEBUG = True
+
+LOG_FILENAME = 'logfile.log'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_FILENAME,
+            'formatter': 'verbose',
+        },
+    },
+    'formatters': {
+        'verbose': {
+            'format': "%(levelname)s :: %(pathname)s:%(lineno)s :: %(asctime)s :: %(message)s",
+            },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+            },
+        },
+    'loggers': {
+        'django.request': {
+            'handlers': ['file', ],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'redirect.views': {
+            'handlers': ['file', ],
+            'level': 'DEBUG',
+        }
+    },
+}
