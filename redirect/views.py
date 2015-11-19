@@ -13,7 +13,9 @@ class ForceStatic(Exception):
 
 def track_statistics(request, redirect):
     """Track statistics related to each link request"""
-    pass
+    totalizer = models.TotalStats.objects.get_or_create(redir=redirect)
+    totalizer[0].accesses += 1
+    totalizer[0].save()
 
 def show_blank_home(request):
     return HttpResponse('tiny; a personalized <a href="https://en.'
@@ -38,7 +40,7 @@ def do_redirect(request, srcuri):
         logger.debug('{0}'.format(srcuri))
         track_statistics(request, redirect)
         if redirect.destination.startswith('http'):
-            return HttpResponseRedirect(redirect.destination, status=301)
+            return HttpResponseRedirect(redirect.destination, status=302)
         else:
             raise ForceStatic()
 
