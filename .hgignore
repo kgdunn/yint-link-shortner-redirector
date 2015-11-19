@@ -1,0 +1,10 @@
+
+yint.wpu
+yint.wpr
+db.sqlite3
+logfile.log
+local_settings.py
+
+syntax: glob
+*.pyc
+
