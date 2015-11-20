@@ -39,16 +39,20 @@ for line in fobj.readlines():
 
     source, rest = line.split('$')
     source = source.strip('/').strip('^')
-    destination = rest.strip()
-    #rest = rest.split('[')
-    print(rest)
+    destination = rest.strip().split('[')
 
-    redir = Redirect.objects.get_or_create(source=source.strip(),
+    status_code = 302
+    if len(destination) > 1:
+        if destination[1].find('R=') >= 0:
+            status_code = 307
+    destination = destination[0].strip()
+
+    print(destination)
+    redir, created = Redirect.objects.get_or_create(source=source.strip(),
                                             destination=destination.strip(),
-                                            status_code=302,
+                                            status_code=status_code,
                                             is_logged=True,
                                             is_active=True)
-
     redir.save()
 
 

@@ -3,8 +3,7 @@ import logging
 from . import models
 
 logger = logging.getLogger(__name__)
-logger.debug('A new call to the views.py file')
-
+logger.debug('Starting views.py file')
 
 from django.conf import settings
 
@@ -37,10 +36,11 @@ def do_redirect(request, srcuri):
     srcuri = srcuri.replace('$','').replace('(', '').replace(')', '')
     try:
         redirect = models.Redirect.objects.get(source=srcuri.strip())
-        logger.debug('{0}'.format(srcuri))
+        logger.debug('REQ: {0}'.format(srcuri))
         track_statistics(request, redirect)
         if redirect.destination.startswith('http'):
-            return HttpResponseRedirect(redirect.destination, status=302)
+            return HttpResponseRedirect(redirect.destination,
+                                        status=redirect.status_code)
         else:
             raise ForceStatic()
 
