@@ -18,6 +18,14 @@ class Redirect(models.Model):
     def __str__(self):
         return '{0}\t:\t{1}'.format(self.source, self.destination)
 
+
+class Statistic(models.Model):
+    """ Tracking individual access to each redirect. """
+    redir = models.ForeignKey('redirect.Redirect')
+    referrer = models.CharField(max_length=250, blank=True)
+    ip_address = models.IPAddressField(blank=True, null=True)
+    accessed = models.DateTimeField(auto_now=True)
+
 class TotalStats(models.Model):
     """ Tracking stats for a redirector """
     redir = models.ForeignKey('redirect.Redirect')

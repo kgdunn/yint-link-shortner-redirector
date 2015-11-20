@@ -1,4 +1,5 @@
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, Http404
+from ipware.ip import get_real_ip
 import logging
 from . import models
 
@@ -15,6 +16,10 @@ def track_statistics(request, redirect):
     totalizer = models.TotalStats.objects.get_or_create(redir=redirect)
     totalizer[0].accesses += 1
     totalizer[0].save()
+
+    stat = models.Statistic.objects.get_or_create(redir=redirect,
+                                referrer=request.META.get('HTTP_REFERER', ''),
+                                ip_address=get_real_ip(request))
 
 def show_blank_home(request):
     return HttpResponse('tiny; a personalized <a href="https://en.'

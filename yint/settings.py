@@ -113,3 +113,7 @@ except ImportError:
 
 # ./manage.py dumpdata rsm  --format=json --indent=2 > backup-`date '+%Y-%m-%d-%H-%M-%S'`.json
 # ./manage.py loaddata backup-________.json
+
+
+# INSTALLATION
+# sudo pip install -U django-ipware
