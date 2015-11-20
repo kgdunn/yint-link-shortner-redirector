@@ -43,8 +43,8 @@ for line in fobj.readlines():
     #rest = rest.split('[')
     print(rest)
 
-    redir = Redirect.objects.get_or_create(source=source,
-                                            destination=destination,
+    redir = Redirect.objects.get_or_create(source=source.strip(),
+                                            destination=destination.strip(),
                                             status_code=302,
                                             is_logged=True,
                                             is_active=True)

@@ -2,7 +2,7 @@ from django.db import models
 
 class Redirect(models.Model):
     """ The redirector definition. """
-    source = models.CharField(max_length=500)
+    source = models.CharField(max_length=500, unique=True)
     destination = models.CharField(max_length=500)
     extra_info = models.CharField(blank=True, max_length=200)
     status_code = models.SmallIntegerField(default=302)
@@ -18,7 +18,6 @@ class Redirect(models.Model):
     def __str__(self):
         return '{0}\t:\t{1}'.format(self.source, self.destination)
 
-
 class TotalStats(models.Model):
     """ Tracking stats for a redirector """
     redir = models.ForeignKey('redirect.Redirect')
@@ -27,4 +26,3 @@ class TotalStats(models.Model):
 
     class Meta:
         verbose_name_plural = 'Total Stats'
-
