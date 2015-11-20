@@ -23,7 +23,7 @@ class Statistic(models.Model):
     """ Tracking individual access to each redirect. """
     redir = models.ForeignKey('redirect.Redirect')
     referrer = models.CharField(max_length=250, blank=True)
-    ip_address = models.IPAddressField(blank=True, null=True)
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
     accessed = models.DateTimeField(auto_now=True)
 
 class TotalStats(models.Model):
