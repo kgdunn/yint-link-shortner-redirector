@@ -27,7 +27,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = (
@@ -75,12 +74,7 @@ WSGI_APPLICATION = 'yint.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
+DATABASES = { }  # Define in "local_settings.py"
 
 
 # Internationalization
@@ -101,44 +95,21 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/Users/kevindunn/Dropbox/Coursera/yint/static-media/'
-STATICFILES_DIRS = (
-    "/Users/kevindunn/Dropbox/Coursera/yint/media-to-copy/",
-)
-
+STATIC_ROOT = ''  # Define in "local_settings.py"
+STATICFILES_DIRS = ("", ) # Define in "local_settings.py"
 
 TEMPLATE_DEBUG = True
 
-LOG_FILENAME = 'logfile.log'
+LOG_FILENAME = '' # Definte in "local_settings.py"
+LOGGING = {}
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': LOG_FILENAME,
-            'formatter': 'verbose',
-        },
-    },
-    'formatters': {
-        'verbose': {
-            'format': "%(levelname)s :: %(lineno)s :: %(asctime)s :: %(message)s",
-            },
-        'simple': {
-            'format': '%(levelname)s %(message)s'
-            },
-        },
-    'loggers': {
-        'django.request': {
-            'handlers': ['file', ],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'redirect.views': {
-            'handlers': ['file', ],
-            'level': 'DEBUG',
-        }
-    },
-}
+try:
+    from local_settings import *
+except ImportError:
+    pass
+
+# Backup/restore notes:
+# ---------------------
+
+# ./manage.py dumpdata rsm  --format=json --indent=2 > backup-`date '+%Y-%m-%d-%H-%M-%S'`.json
+# ./manage.py loaddata backup-________.json
