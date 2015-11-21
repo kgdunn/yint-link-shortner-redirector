@@ -14,7 +14,7 @@ class TotalizerAdmin(admin.ModelAdmin):
     list_display_links = list_display
 
 class StatsAdmin(admin.ModelAdmin):
-    list_display = ('redir', 'referrer', 'ip_address', 'accessed',)
+    list_display = ('redir', 'referrer', 'ip_address', 'accessed', 'user_agent')
     list_display_links = list_display
 
 admin.site.register(Redirect, RedirectAdmin)
