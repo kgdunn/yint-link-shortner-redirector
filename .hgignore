@@ -4,6 +4,7 @@ yint.wpr
 db.sqlite3
 logfile.log
 local_settings.py
+web-setup.txt
 
 syntax: glob
 *.pyc
