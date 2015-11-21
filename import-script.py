@@ -1,5 +1,8 @@
 import os
 import django
+import urllib2
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 import yint.settings
 os.environ.setdefault(
@@ -8,21 +11,7 @@ os.environ.setdefault(
 )
 django.setup()
 
-
-
-#settings.configure(
-    #DATABASES = {
-    #'default': {
-        #'ENGINE': 'django.db.backends.sqlite3',
-        #'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        #}
-    #},
-    #TIME_ZONE='America/Montreal',
-#)
-
-
 from redirect.models import Redirect
-
 
 fobj = file('existing-redirects.txt', 'rt')
 for line in fobj.readlines():
@@ -48,12 +37,29 @@ for line in fobj.readlines():
     destination = destination[0].strip()
 
     print(destination)
-    redir, created = Redirect.objects.get_or_create(source=source.strip(),
-                                            destination=destination.strip(),
-                                            status_code=status_code,
-                                            is_logged=True,
-                                            is_active=True)
-    redir.save()
+
+    # Testing the URLs
+    try:
+        req = urllib2.Request('http://yint.org/' + source)
+        response = urllib2.urlopen(req)
+        the_page = response.read()
+
+        print('***: ' + the_page[0:100])
+        print('-----------------')
+    except Exception as e:
+        print('Error:' + str(e))
+        print('-----------------')
+
+
+    # This was how I originally converted the .htaccess file into the Django DB
+    # --------
+    #redir, created = Redirect.objects.get_or_create(source=source.strip(),
+                                            #destination=destination.strip(),
+                                            #status_code=status_code,
+                                            #is_logged=True,
+                                            #is_active=True)
+    #redir.save()
+
 
 
 

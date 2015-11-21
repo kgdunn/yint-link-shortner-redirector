@@ -55,4 +55,5 @@ def do_redirect(request, srcuri):
 
     except models.Redirect.DoesNotExist:
         logger.warn('FAIL: {0}'.format(srcuri))
-        raise Http404('Not found.')
+        return HttpResponseRedirect(settings.STATIC_URL + srcuri    )
+        #raise Http404('Not found.')
