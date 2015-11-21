@@ -41,7 +41,8 @@ def do_redirect(request, srcuri):
     srcuri = srcuri.replace('$','').replace('(', '').replace(')', '')
     try:
         redirect = models.Redirect.objects.get(source=srcuri.strip())
-        logger.debug('REQ: {0}'.format(srcuri))
+        logger.debug('REQ [{0}]: {1}'.format(get_real_ip(request),
+                                             srcuri))
         track_statistics(request, redirect)
         if redirect.destination.startswith('http'):
             return HttpResponseRedirect(redirect.destination,
