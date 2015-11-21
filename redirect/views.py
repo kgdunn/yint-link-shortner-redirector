@@ -21,9 +21,10 @@ def track_statistics(request, redirect):
     totalizer[0].accesses += 1
     totalizer[0].save()
 
-    stat = models.Statistic.objects.get_or_create(redir=redirect,
-                                referrer=request.META.get('HTTP_REFERER', ''),
-                                ip_address=get_real_ip(request))
+    stat = models.Statistic(redir=redirect,
+                            referrer=request.META.get('HTTP_REFERER', ''),
+                            ip_address=get_real_ip(request))
+    stat.save()
 
 def show_blank_home(request):
     return HttpResponse('tiny; a personalized <a href="https://en.'
