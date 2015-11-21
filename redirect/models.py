@@ -16,7 +16,7 @@ class Redirect(models.Model):
         super(Redirect, self).save(*args, **kwargs)
 
     def __str__(self):
-        return '{0}\t:\t{1}'.format(self.source, self.destination)
+        return '{0}\t:\t{1}'.format(self.source, self.destination[0:50])
 
 
 class Statistic(models.Model):
