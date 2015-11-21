@@ -22,8 +22,9 @@ def track_statistics(request, redirect):
     totalizer[0].save()
 
     stat = models.Statistic(redir=redirect,
-                            referrer=request.META.get('HTTP_REFERER', ''),
-                            ip_address=get_real_ip(request))
+                    referrer=request.META.get('HTTP_REFERER', '')[0:249],
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')[0:249],
+                    ip_address=get_real_ip(request))
     stat.save()
 
 def show_blank_home(request):

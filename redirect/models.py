@@ -25,6 +25,7 @@ class Statistic(models.Model):
     referrer = models.CharField(max_length=250, blank=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
     accessed = models.DateTimeField(auto_now=True)
+    user_agent = models.CharField(max_length=250, blank=True)
 
 class TotalStats(models.Model):
     """ Tracking stats for a redirector """
