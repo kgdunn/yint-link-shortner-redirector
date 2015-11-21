@@ -13,6 +13,10 @@ class ForceStatic(Exception):
 
 def track_statistics(request, redirect):
     """Track statistics related to each link request"""
+
+    if redirect.is_logged == False:
+        return
+
     totalizer = models.TotalStats.objects.get_or_create(redir=redirect)
     totalizer[0].accesses += 1
     totalizer[0].save()
@@ -40,7 +44,8 @@ def do_redirect(request, srcuri):
     """
     srcuri = srcuri.replace('$','').replace('(', '').replace(')', '')
     try:
-        redirect = models.Redirect.objects.get(source=srcuri.strip())
+        redirect = models.Redirect.objects.get(source=srcuri.strip(),
+                                               is_active=True)
         logger.debug('REQ [{0}]: {1}'.format(get_real_ip(request),
                                              srcuri))
         track_statistics(request, redirect)
