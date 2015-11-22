@@ -65,10 +65,10 @@ def do_redirect(request, srcuri):
 
     except models.Redirect.DoesNotExist:
         redirect, created = models.Redirect.objects.get_or_create(source=srcuri,
-                        destination=settings.STATIC_URL + srcuri,
-                        extra_info='Auto(FAIL)',
-                        is_active=True,
-                        is_logged=True)
+                                                        destination=srcuri,
+                                                        extra_info='Auto(FAIL)',
+                                                        is_active=True,
+                                                        is_logged=True)
         track_statistics(request, redirect)
 
         if os.path.exists(settings.STATIC_ROOT + srcuri) and created:
