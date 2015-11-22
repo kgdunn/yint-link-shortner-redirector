@@ -1,5 +1,6 @@
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, Http404
 from ipware.ip import get_real_ip
+import os
 import logging
 from . import models
 
@@ -44,9 +45,9 @@ def do_redirect(request, srcuri):
        NO: it might be static media on the server. Serve it.
            Obviously if it is not static media, then the server will 404.
     """
-    srcuri = srcuri.replace('$','').replace('(', '').replace(')', '')
+    srcuri = srcuri.replace('$','').replace('(', '').replace(')', '').strip()
     try:
-        redirect = models.Redirect.objects.get(source=srcuri.strip(),
+        redirect = models.Redirect.objects.get(source=srcuri,
                                                is_active=True)
         logger.debug('REQ [{0}]: {1}'.format(get_real_ip(request),
                                              srcuri))
@@ -59,9 +60,21 @@ def do_redirect(request, srcuri):
 
     except ForceStatic:
         logger.warn('FORCED MEDIA: {0}'.format(srcuri))
-        return HttpResponseRedirect(settings.STATIC_URL + redirect.destination)
+        return HttpResponseRedirect(settings.STATIC_URL + redirect.destination,
+                                    status=redirect.status_code)
 
     except models.Redirect.DoesNotExist:
-        logger.warn('FAIL: {0}'.format(srcuri))
-        return HttpResponseRedirect(settings.STATIC_URL + srcuri    )
-        #raise Http404('Not found.')
+        redirect, created = models.Redirect.objects.get_or_create(source=srcuri,
+                        destination=settings.STATIC_URL + srcuri,
+                        extra_info='Auto(FAIL)',
+                        is_active=True,
+                        is_logged=True)
+        track_statistics(request, redirect)
+
+        if os.path.exists(settings.STATIC_ROOT + srcuri) and created:
+            logger.info('AUTO created redirect: {0}'.format(str(redirect)))
+        else:
+            logger.warn('FAIL: {0}'.format(srcuri))
+            redirect.delete()
+
+        return HttpResponseRedirect(settings.STATIC_URL + srcuri)
