@@ -1,3 +1,4 @@
+
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, Http404
 from ipware.ip import get_real_ip
 import os
