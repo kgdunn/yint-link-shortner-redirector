@@ -16,7 +16,10 @@ class Redirect(models.Model):
         super(Redirect, self).save(*args, **kwargs)
 
     def __str__(self):
-        return '{0}\t:\t{1}'.format(self.source[0:50], self.destination[0:50])
+        try:
+            return '{0}\t:\t{1}'.format(self.source[0:50], self.destination[0:50]).encode('utf-8', 'replace')
+        except UnicodeEncodeError:
+            return 'Unicode error'
 
 
 class Statistic(models.Model):
