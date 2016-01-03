@@ -57,6 +57,7 @@ for idx, line in enumerate(fobj.readlines()):
                                             status_code=status_code,
                                             is_logged=True,
                                             is_active=True)
+    redir.extra_info = 'OOI-4C3'
     redir.save()
 
     #------
@@ -65,6 +66,7 @@ for idx, line in enumerate(fobj.readlines()):
                                             status_code=status_code,
                                             is_logged=True,
                                             is_active=True)
+    redir.extra_info = 'OOI-4C3'
     redir.save()
 
     #------
@@ -73,6 +75,7 @@ for idx, line in enumerate(fobj.readlines()):
                                             status_code=status_code,
                                             is_logged=True,
                                             is_active=True)
+    redir.extra_info = 'OOI-4C3'
     redir.save()
 
 
