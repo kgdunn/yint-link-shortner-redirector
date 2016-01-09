@@ -1,12 +1,20 @@
 
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, Http404
+from django.utils.timezone import utc
 from ipware.ip import get_real_ip
 import os
 import logging
+import datetime
 from . import models
 
 logger = logging.getLogger(__name__)
 logger.debug('Starting views.py file')
+
+
+# If a user downloads the same file more than 5 times in this interval, then
+# they will be blocked
+THROTTLE_SECONDS = 15*60
+
 
 from django.conf import settings
 
@@ -47,11 +55,31 @@ def do_redirect(request, srcuri):
            Obviously if it is not static media, then the server will 404.
     """
     srcuri = srcuri.replace('$','').replace('(', '').replace(')', '').strip()
+    ip_address = get_real_ip(request)
+
+    prior_downloads = models.Statistic.objects.filter(ip_address=ip_address,
+                user_agent=request.META.get('HTTP_USER_AGENT', '')[0:249])\
+                .order_by('-accessed')[:5]
+
+    if len(prior_downloads) == 5:
+        delta = datetime.datetime.now().replace(tzinfo=utc) - \
+                                             prior_downloads[4].accessed
+
+        if delta.seconds < THROTTLE_SECONDS:
+            logger.warn('BLOCKED [{0}]: {1}'.format(ip_address, srcuri))
+            stat = models.Statistic(redir=redirect,
+                                    referrer='BLOCKED ACCESS',
+                      user_agent=request.META.get('HTTP_USER_AGENT', '')[0:249],
+                                ip_address=ip_address)
+            stat.save()
+            return HttpResponse(("Too many downloads in a short time. Sorry. "
+                                "You are blocked."), status=503)
+
+
     try:
         redirect = models.Redirect.objects.get(source=srcuri,
                                                is_active=True)
-        logger.debug('REQ [{0}]: {1}'.format(get_real_ip(request),
-                                             srcuri))
+        logger.debug('REQ [{0}]: {1}'.format(ip_address, srcuri))
         track_statistics(request, redirect)
         if redirect.destination.startswith('http'):
             return HttpResponseRedirect(redirect.destination,
