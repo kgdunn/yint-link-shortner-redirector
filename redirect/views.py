@@ -79,8 +79,8 @@ def do_redirect(request, srcuri):
                                     user_agent=request.META.get('HTTP_USER_AGENT', '')[0:249])
             stat.save()
 
-            return HttpResponse(("Too many downloads in a short time. Sorry. "
-                                "You are blocked."), status=503)
+            return HttpResponse(("Too many downloads in a short time. Please "
+                                "download less aggressively."), status=503)
 
     try:
         if redir_exists == False:
