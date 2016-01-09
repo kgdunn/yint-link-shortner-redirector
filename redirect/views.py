@@ -54,35 +54,38 @@ def do_redirect(request, srcuri):
        NO: it might be static media on the server. Serve it.
            Obviously if it is not static media, then the server will 404.
     """
-    srcuri = srcuri.replace('$','').replace('(', '').replace(')', '').strip()
     ip_address = get_real_ip(request)
+    srcuri = srcuri.replace('$','').replace('(', '').replace(')', '').strip()
+    redir_exists = True
+    try:
+        redirect = models.Redirect.objects.get(source=srcuri,
+                                               is_active=True)
+        prior_downloads = models.Statistic.objects.filter(ip_address=ip_address,
+                                                          redir=redirect,
+            user_agent=request.META.get('HTTP_USER_AGENT', '')[0:249])\
+            .order_by('-accessed')[:5]
 
-    prior_downloads = models.Statistic.objects.filter(ip_address=ip_address,
-                user_agent=request.META.get('HTTP_USER_AGENT', '')[0:249])\
-                .order_by('-accessed')[:5]
+    except models.Redirect.DoesNotExist:
+        redir_exists = False
 
-    if len(prior_downloads) == 5:
+    if redir_exists and len(prior_downloads) == 5:
         delta = datetime.datetime.now().replace(tzinfo=utc) - \
                                              prior_downloads[4].accessed
 
         if delta.seconds < THROTTLE_SECONDS:
             logger.warn('BLOCKED [{0}]: {1}'.format(ip_address, srcuri))
-            try:
-                redirect = models.Redirect.objects.get(source=srcuri,
-                                                               is_active=True)
-                stat = models.Statistic(redir=redirect, ip_address=ip_address,
-                                        referrer='BLOCKED ACCESS',
-                    user_agent=request.META.get('HTTP_USER_AGENT', '')[0:249])
-                stat.save()
-            except models.Redirect.DoesNotExist:
-                pass
+            stat = models.Statistic(redir=redirect, ip_address=ip_address,
+                                    referrer='BLOCKED ACCESS',
+                                    user_agent=request.META.get('HTTP_USER_AGENT', '')[0:249])
+            stat.save()
 
             return HttpResponse(("Too many downloads in a short time. Sorry. "
                                 "You are blocked."), status=503)
 
     try:
-        redirect = models.Redirect.objects.get(source=srcuri,
-                                               is_active=True)
+        if redir_exists == False:
+            raise models.Redirect.DoesNotExist
+
         logger.debug('REQ [{0}]: {1}'.format(ip_address, srcuri))
         track_statistics(request, redirect)
         if redirect.destination.startswith('http'):
