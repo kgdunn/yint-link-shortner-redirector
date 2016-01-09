@@ -16,7 +16,7 @@ from redirect.models import Redirect
 # Exported from Google Docs
 # https://docs.google.com/spreadsheets/d/1AD5xSEPCcWDO4EGp3A55sIDBZbR0kJz2WM6KdlxXG2s/
 
-fobj = file('ooi-redirects.csv', 'rt')
+fobj = file('ooi-redirects-4.csv', 'rt')
 for idx, line in enumerate(fobj.readlines()):
 
     if idx < 2:
