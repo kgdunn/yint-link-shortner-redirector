@@ -67,14 +67,18 @@ def do_redirect(request, srcuri):
 
         if delta.seconds < THROTTLE_SECONDS:
             logger.warn('BLOCKED [{0}]: {1}'.format(ip_address, srcuri))
-            stat = models.Statistic(redir=redirect,
-                                    referrer='BLOCKED ACCESS',
-                      user_agent=request.META.get('HTTP_USER_AGENT', '')[0:249],
-                                ip_address=ip_address)
-            stat.save()
+            try:
+                redirect = models.Redirect.objects.get(source=srcuri,
+                                                               is_active=True)
+                stat = models.Statistic(redir=redirect, ip_address=ip_address,
+                                        referrer='BLOCKED ACCESS',
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')[0:249])
+                stat.save()
+            except models.Redirect.DoesNotExist:
+                pass
+
             return HttpResponse(("Too many downloads in a short time. Sorry. "
                                 "You are blocked."), status=503)
-
 
     try:
         redirect = models.Redirect.objects.get(source=srcuri,
