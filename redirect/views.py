@@ -80,7 +80,10 @@ def do_redirect(request, srcuri):
             stat.save()
 
             return HttpResponse(("Too many downloads in a short time. Please "
-                                "download less aggressively."), status=503)
+                                "download less aggressively. You may have a "
+                                "virus/malware on your device that is causing "
+                                "many, rapid downloads of the same file. Try "
+                                "using another computer/device."), status=503)
 
     try:
         if redir_exists == False:
