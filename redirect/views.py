@@ -40,7 +40,7 @@ def track_statistics(request, redirect):
 def show_blank_home(request):
     return HttpResponse('tiny; a personalized <a href="https://en.'
                         'wikipedia.org/wiki/URL_shortening">link shortener</a> '
-                        'service')
+                        'service; any issues? contact kgdunn @ gmail.com')
 
 def do_redirect(request, srcuri):
     """ Handle the redirect.

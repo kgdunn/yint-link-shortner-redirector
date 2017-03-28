@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '2^y%!f$6ncjz+t*5nz-sum6e=#g42m8%ybe4rmw@2peaods379'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -100,7 +100,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = ''  # Define in "local_settings.py"
 STATICFILES_DIRS = ("", ) # Define in "local_settings.py"
 
-TEMPLATE_DEBUG = True
+TEMPLATE_DEBUG = False
 
 LOG_FILENAME = '' # Definte in "local_settings.py"
 LOGGING = {}
