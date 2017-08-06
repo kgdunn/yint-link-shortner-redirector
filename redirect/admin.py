@@ -4,8 +4,8 @@ from .models import Redirect, TotalStats, Statistic
 
 
 class RedirectAdmin(admin.ModelAdmin):
-    list_display = ('source', 'destination', 'extra_info', 'is_logged',
-                    'is_active', 'status_code')
+    list_display = ('source', 'destination', 'extra_info', 'referer_constraint', 
+                    'is_logged', 'is_active', 'status_code')
     list_display_links = list_display
     list_per_page = 400
 

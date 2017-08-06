@@ -91,6 +91,17 @@ def do_redirect(request, srcuri):
 
         logger.debug('REQ [{0}]: {1}'.format(ip_address, srcuri))
         track_statistics(request, redirect)
+
+
+        referer = request.META.get('HTTP_REFERER', '')
+        if redirect.referer_constraint:
+            if not(redirect.referer_constraint in referer):
+                logger.debug('REFERER NOT ALLOWED: [{0}]: {1}'.format(referer, redirect.referer_constraint))
+                if redirect.customized_error:
+                    return HttpResponse(redirect.customized_error)
+                else:
+                    return HttpResponse(("You have accessed the link from a location that is not allowed."))
+
         if redirect.destination.startswith('http'):
             return HttpResponseRedirect(redirect.destination,
                                         status=redirect.status_code)
