@@ -67,7 +67,6 @@ TEMPLATES = [
         },
     },
 ]
-TEMPLATES = []
 
 
 WSGI_APPLICATION = 'yint.wsgi.application'

@@ -17,6 +17,8 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from redirect import urls as redirect_urls
 
+from django.contrib import admin
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
 
