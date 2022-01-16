@@ -1,0 +1,6 @@
+
+*.sqlite
+logfile.log
+*.pyc
+static-media
+*.code-workspace
