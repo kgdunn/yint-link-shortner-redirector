@@ -51,6 +51,7 @@ def track_statistics(request, redirect):
         ip_address=get_IP_address(request),
     )
     stat.save()
+    return totalizer[0], stat
 
 
 def show_blank_home(request):
@@ -93,7 +94,7 @@ def do_redirect(request, srcuri):
         )
 
         if delta.seconds < THROTTLE_SECONDS:
-            logger.warn("BLOCKED [{0}]: {1}".format(ip_address, srcuri))
+            logger.warn(f"BLOCKED [{ip_address}]: {srcuri}")
             stat = models.Statistic(
                 redir=redirect,
                 ip_address=ip_address,
@@ -117,16 +118,14 @@ def do_redirect(request, srcuri):
         if redir_exists is False:
             raise models.Redirect.DoesNotExist
 
-        logger.debug("REQ [{0}]: {1}".format(ip_address, srcuri))
+        logger.debug(f"REQ [{ip_address}]: {srcuri}")
         track_statistics(request, redirect)
 
         referer = request.META.get("HTTP_REFERER", "")
         if redirect.referer_constraint:
             if not (redirect.referer_constraint in referer):
                 logger.debug(
-                    "REFERER NOT ALLOWED: [{0}]: {1}".format(
-                        referer, redirect.referer_constraint
-                    )
+                    f"REFERER NOT ALLOWED: [{referer}]: {redirect.referer_constraint}"
                 )
                 if redirect.customized_error:
                     return HttpResponse(redirect.customized_error)
@@ -145,7 +144,7 @@ def do_redirect(request, srcuri):
             raise ForceStatic()
 
     except ForceStatic:
-        logger.warn("FORCED MEDIA: {0}".format(srcuri))
+        logger.warn(f"FORCED MEDIA: {srcuri}")
         return HttpResponseRedirect(
             settings.STATIC_URL + redirect.destination, status=redirect.status_code
         )
@@ -158,12 +157,13 @@ def do_redirect(request, srcuri):
             is_active=True,
             is_logged=True,
         )
-        track_statistics(request, redirect)
-
-        if os.path.exists(settings.STATIC_ROOT + srcuri) and created:
-            logger.info("AUTO created redirect: {0}".format(str(redirect)))
+        totalizer, statitem = track_statistics(request, redirect)
+        if os.path.exists(str(settings.STATIC_ROOT) + srcuri) and created:
+            logger.info(f"AUTO created redirect: {str(redirect)}")
         else:
-            logger.warn("FAIL: {0}".format(srcuri))
+            logger.warn(f"FAIL: {srcuri}")
+            totalizer.delete()
+            statitem.delete()
             redirect.delete()
 
         return HttpResponseRedirect(settings.STATIC_URL + srcuri)
