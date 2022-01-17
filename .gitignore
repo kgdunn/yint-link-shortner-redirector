@@ -6,3 +6,4 @@ static-media
 *.code-workspace
 .env
 *.json
+static/*

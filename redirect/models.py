@@ -22,12 +22,7 @@ class Redirect(models.Model):
         super(Redirect, self).save(*args, **kwargs)
 
     def __str__(self):
-        try:
-            return f"{self.source[0:50]}\t:\t{self.destination[0:50]}".encode(
-                "utf-8", "replace"
-            )
-        except UnicodeEncodeError:
-            return "Unicode error"
+        return f"{self.source[0:50]}\t:\t{self.destination[0:50]}"
 
 
 class Statistic(models.Model):
@@ -39,13 +34,19 @@ class Statistic(models.Model):
     accessed = models.DateTimeField(auto_now=True)
     user_agent = models.CharField(max_length=250, blank=True)
 
+    def __str__(self):
+        return f"{self.redir.source[0:50]}: {self.accessed}"
+
 
 class TotalStats(models.Model):
     """Tracking stats for a redirector"""
+
+    class Meta:
+        verbose_name_plural = "Total Stats"
 
     redir = models.ForeignKey(Redirect, on_delete=models.PROTECT)
     accesses = models.BigIntegerField(default=0)
     last_access = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        verbose_name_plural = "Total Stats"
+    def __str__(self):
+        return f"{self.redir.source[0:50]}: {self.accesses}"
