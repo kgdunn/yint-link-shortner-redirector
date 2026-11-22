@@ -1,10 +1,11 @@
-import datetime
+import ipaddress
 import logging
-import os
+from pathlib import Path
 
 from django.conf import settings
+from django.http import Http404
 from django.shortcuts import HttpResponse, HttpResponseRedirect
-from django.utils.timezone import utc
+from django.utils import timezone
 
 from . import models
 
@@ -17,17 +18,35 @@ logger.debug("Starting views.py file")
 THROTTLE_SECONDS = 15 * 60
 
 
-def get_IP_address(request) -> str:
+def get_IP_address(request) -> str | None:
     """
-    Returns the visitor's IP address as a string given the Django ``request``.
+    Returns the visitor's IP address given the Django ``request``, or None.
+
+    Caddy sets X-Real-IP to the client address (resolved from Cloudflare's
+    header). X-Forwarded-For can hold a chain "client, proxy1, ..."; only its
+    first entry is the client. REMOTE_ADDR is the proxy itself, so it is the
+    last resort. A value that is not an IP address is dropped, because the
+    database column only accepts addresses.
     """
-    # Catchs the case when the user is on a proxy
-    ip = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    if ip == "" or ip.lower() in ("unkown",):
-        ip = request.META.get("REMOTE_ADDR", "")  # User is not on a proxy
-    if ip == "" or ip.lower() in ("unkown",):
-        ip = request.META.get("HTTP_X_REAL_IP")
-    return ip
+    meta = request.META
+    candidates = (
+        meta.get("HTTP_X_REAL_IP", ""),
+        meta.get("HTTP_X_FORWARDED_FOR", "").split(",")[0],
+        meta.get("REMOTE_ADDR", ""),
+    )
+    for value in candidates:
+        try:
+            return str(ipaddress.ip_address(value.strip()))
+        except ValueError:
+            continue
+    return None
+
+
+def is_static_file(srcuri: str) -> bool:
+    """True if ``srcuri`` names an existing file inside STATIC_ROOT."""
+    root = Path(settings.STATIC_ROOT).resolve()
+    target = (root / srcuri).resolve()
+    return target.is_relative_to(root) and target.is_file()
 
 
 class ForceStatic(Exception):
@@ -89,12 +108,12 @@ def do_redirect(request, srcuri):
         redir_exists = False
 
     if redir_exists and len(prior_downloads) == 5:
-        delta = (
-            datetime.datetime.now().replace(tzinfo=utc) - prior_downloads[4].accessed
-        )
+        delta = timezone.now() - prior_downloads[4].accessed
 
-        if delta.seconds < THROTTLE_SECONDS:
-            logger.warn(f"BLOCKED [{ip_address}]: {srcuri}")
+        # total_seconds(), not .seconds: the latter drops whole days, so five
+        # downloads spread over several days could look like a burst.
+        if delta.total_seconds() < THROTTLE_SECONDS:
+            logger.warning(f"BLOCKED [{ip_address}]: {srcuri}")
             stat = models.Statistic(
                 redir=redirect,
                 ip_address=ip_address,
@@ -144,12 +163,17 @@ def do_redirect(request, srcuri):
             raise ForceStatic()
 
     except ForceStatic:
-        logger.warn(f"FORCED MEDIA: {srcuri}")
+        logger.warning(f"FORCED MEDIA: {srcuri}")
         return HttpResponseRedirect(
             settings.STATIC_URL + redirect.destination, status=redirect.status_code
         )
 
     except models.Redirect.DoesNotExist:
+        # A deactivated link gives a 404, as the model's help text promises.
+        # Without this check, get_or_create below hits the unique constraint.
+        if models.Redirect.objects.filter(source=srcuri).exists():
+            raise Http404()
+
         redirect, created = models.Redirect.objects.get_or_create(
             source=srcuri,
             destination=srcuri,
@@ -158,10 +182,10 @@ def do_redirect(request, srcuri):
             is_logged=True,
         )
         totalizer, statitem = track_statistics(request, redirect)
-        if os.path.exists(str(settings.STATIC_ROOT) + srcuri) and created:
+        if created and is_static_file(srcuri):
             logger.info(f"AUTO created redirect: {str(redirect)}")
         else:
-            logger.warn(f"FAIL: {srcuri}")
+            logger.warning(f"FAIL: {srcuri}")
             totalizer.delete()
             statitem.delete()
             redirect.delete()
