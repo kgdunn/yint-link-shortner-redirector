@@ -44,7 +44,7 @@ class TotalStats(models.Model):
     class Meta:
         verbose_name_plural = "Total Stats"
 
-    redir = models.ForeignKey(Redirect, on_delete=models.PROTECT)
+    redir = models.OneToOneField(Redirect, on_delete=models.PROTECT)
     accesses = models.BigIntegerField(default=0)
     last_access = models.DateTimeField(auto_now=True)
 

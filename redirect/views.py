@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 from django.conf import settings
+from django.db.models import F
 from django.http import Http404
 from django.shortcuts import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
@@ -59,18 +60,17 @@ def track_statistics(request, redirect):
     if redirect.is_logged is False:
         return
 
-    totalizer = models.TotalStats.objects.get_or_create(redir=redirect)
-    totalizer[0].accesses += 1
-    totalizer[0].save()
-
-    stat = models.Statistic(
+    totalizer, _ = models.TotalStats.objects.get_or_create(redir=redirect)
+    # Add one inside the database, so two simultaneous visits both count.
+    models.TotalStats.objects.filter(pk=totalizer.pk).update(
+        accesses=F("accesses") + 1, last_access=timezone.now()
+    )
+    models.Statistic.objects.create(
         redir=redirect,
         referrer=request.META.get("HTTP_REFERER", "")[0:249],
         user_agent=request.META.get("HTTP_USER_AGENT", "")[0:249],
         ip_address=get_IP_address(request),
     )
-    stat.save()
-    return totalizer[0], stat
 
 
 def show_blank_home(request):
@@ -163,31 +163,28 @@ def do_redirect(request, srcuri):
             raise ForceStatic()
 
     except ForceStatic:
-        logger.warning(f"FORCED MEDIA: {srcuri}")
+        logger.info(f"FORCED MEDIA: {srcuri}")
         return HttpResponseRedirect(
             settings.STATIC_URL + redirect.destination, status=redirect.status_code
         )
 
     except models.Redirect.DoesNotExist:
         # A deactivated link gives a 404, as the model's help text promises.
-        # Without this check, get_or_create below hits the unique constraint.
         if models.Redirect.objects.filter(source=srcuri).exists():
             raise Http404()
 
-        redirect, created = models.Redirect.objects.get_or_create(
-            source=srcuri,
-            destination=srcuri,
-            extra_info="Auto(FAIL)",
-            is_active=True,
-            is_logged=True,
-        )
-        totalizer, statitem = track_statistics(request, redirect)
-        if created and is_static_file(srcuri):
-            logger.info(f"AUTO created redirect: {str(redirect)}")
+        # Only a path naming a real file under STATIC_ROOT becomes a link.
+        # Anything else (mostly bots probing for wp-config.php, .env and the
+        # like) writes nothing and is sent on to /static/, which gives a 404.
+        if is_static_file(srcuri):
+            redirect, created = models.Redirect.objects.get_or_create(
+                source=srcuri,
+                defaults={"destination": srcuri, "extra_info": "Auto"},
+            )
+            track_statistics(request, redirect)
+            if created:
+                logger.info(f"AUTO created redirect: {redirect}")
         else:
             logger.warning(f"FAIL: {srcuri}")
-            totalizer.delete()
-            statitem.delete()
-            redirect.delete()
 
         return HttpResponseRedirect(settings.STATIC_URL + srcuri)
