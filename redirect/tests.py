@@ -53,6 +53,9 @@ class RedirectTests(TestCase):
         )
         self.assertEqual(models.Statistic.objects.get().ip_address, "1.2.3.4")
 
+    def test_redirect_is_not_cacheable(self):
+        self.assertIn("no-store", self.get()["Cache-Control"])
+
     def test_visits_are_counted_in_one_total(self):
         self.get()
         self.get()
