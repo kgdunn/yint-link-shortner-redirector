@@ -53,6 +53,11 @@ class RedirectTests(TestCase):
         )
         self.assertEqual(models.Statistic.objects.get().ip_address, "1.2.3.4")
 
+    def test_visits_are_counted_in_one_total(self):
+        self.get()
+        self.get()
+        self.assertEqual(models.TotalStats.objects.get(redir=self.link).accesses, 2)
+
     def test_rapid_downloads_are_blocked(self):
         self.add_hits(5, timedelta(minutes=1))
         self.assertEqual(self.get().status_code, 503)
@@ -68,12 +73,13 @@ class RedirectTests(TestCase):
         self.link.save()
         self.assertEqual(self.get().status_code, 404)
 
-    def test_unknown_link_goes_to_static_and_leaves_no_trace(self):
-        response = self.get("/no-such-file.pdf")
+    def test_unknown_link_goes_to_static_and_writes_nothing(self):
+        response = self.get("/wp-config.php")
         self.assertRedirects(
-            response, "/static/no-such-file.pdf", fetch_redirect_response=False
+            response, "/static/wp-config.php", fetch_redirect_response=False
         )
-        self.assertFalse(models.Redirect.objects.filter(source="no-such-file.pdf"))
+        self.assertEqual(models.Redirect.objects.count(), 1)  # only self.link
+        self.assertFalse(models.Statistic.objects.exists())
 
     def test_existing_static_file_is_auto_created(self):
         import tempfile
@@ -86,3 +92,16 @@ class RedirectTests(TestCase):
                 self.get("/../etc/passwd")
         self.assertTrue(models.Redirect.objects.filter(source="notes.pdf"))
         self.assertFalse(models.Redirect.objects.filter(source__contains="passwd"))
+
+
+class CheckLinksTests(TestCase):
+    def test_reports_and_leaves_no_statistics(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        models.Redirect.objects.create(source="abc", destination="https://example.org/")
+        out = StringIO()
+        call_command("check_links", stdout=out)
+        self.assertIn("1 links: 0 wrong", out.getvalue())
+        self.assertFalse(models.Statistic.objects.exists())
