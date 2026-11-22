@@ -7,6 +7,7 @@ from django.db.models import F
 from django.http import Http404
 from django.shortcuts import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 
 from . import models
 
@@ -81,6 +82,9 @@ def show_blank_home(request):
     )
 
 
+# Cloudflare caches responses for paths ending in .pdf, .mp4 and the like.
+# A cached redirect never reaches the app, so the visit would go uncounted.
+@never_cache
 def do_redirect(request, srcuri):
     """Handle the redirect.
 
