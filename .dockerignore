@@ -1,0 +1,6 @@
+.git
+.env
+static
+*.sqlite*
+__pycache__
+import-*.py

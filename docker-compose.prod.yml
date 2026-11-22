@@ -1,0 +1,42 @@
+# Production: yint-app on 127.0.0.1:8004 behind Caddy, which serves /static/
+# straight from ./static. Both containers read .env (SECRET_KEY, POSTGRES_*).
+name: yint
+
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "10m", max-file: "3"}
+
+services:
+  yint-postgres:
+    image: postgres:17-alpine
+    container_name: yint-postgres
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - yint-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+    logging: *logging
+
+  yint-app:
+    build: .
+    container_name: yint-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      SQL_HOST: yint-postgres
+      SQL_PORT: "5432"
+      DJANGO_DEBUG: "0"
+    volumes:
+      - ./static:/app/static
+    ports:
+      - "127.0.0.1:8004:8000"
+    depends_on:
+      yint-postgres:
+        condition: service_healthy
+    logging: *logging
+
+volumes:
+  yint-pgdata:
